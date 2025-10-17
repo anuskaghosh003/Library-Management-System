@@ -1,3 +1,6 @@
+import csv
+import os
+
 class Book:
     def __init__(self,title,author,isbn):
         self.title= title
@@ -10,11 +13,35 @@ class Book:
         return f"{self.title} by {self.author} | ISBN: {self.isbn} | {status}"
     
 class Library:
-    def __init__(self):
+    def __init__(self, filename='books_data.csv'):
+        self.filename= filename
         self.books= []
+        self.load_books()
+
+    def load_books(self):
+        if os.path.exists(self.filename):
+            with open(self.filename, 'r',newline='', encoding='utf-8') as file:
+                reader=csv.DictReader(file)
+                for row in reader:
+                    book=Book(row['title'], row['author'], row['isbn'],row['available']== 'True')
+                    self.books.append(book)
+
+    def save_books(self):
+        with open(self.filename,'w',newline='',encoding='utf-8')as file:
+            fieldnames=['title','author','isbn','available']
+            writer= csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            for book in self.books:
+                writer.writerow({
+                    'title': book.title,
+                    'author': book.author,
+                    'isbn': book.isbn,
+                    'available': book.available
+                })
 
     def add_book(self,book):
         self.books.append(book)
+        self.save_books()
         print(f'✅ Book "{book.title}" added successfully!')
 
     def display_books(self):
@@ -29,6 +56,7 @@ class Library:
             if book.isbn == isbn :
                 if book.available:
                     book.available= False
+                    self.save_books()
                     print(f'📕 Book "{book.title}" has been issued. ')
                     return
                 else:
@@ -41,6 +69,7 @@ class Library:
             if book.isbn == isbn :
                 if not book.available:
                     book.available= True
+                    self.save_books()
                     print(f'📗 Book "{book.title}" returned successfully.')
                     return
                 else:
